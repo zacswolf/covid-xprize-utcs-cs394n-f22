@@ -11,6 +11,8 @@ import neat
 import numpy as np
 import pandas as pd
 
+import ipdb
+
 from examples.predictors.lstm.xprize_predictor import XPrizePredictor
 
 from utils import CASES_COL
@@ -74,7 +76,10 @@ eval_end_date = pd.to_datetime(EVAL_END_DATE, format='%Y-%m-%d')
 
 # Function that evaluates the fitness of each prescriptor model
 def eval_genomes(genomes, config):
+
     for genome_id, genome in genomes:
+
+        print("Evaluating genome: {}".format(genome_id))
 
         # Create net from genome
         net = neat.nn.FeedForwardNetwork.create(genome, config)
@@ -121,15 +126,22 @@ def eval_genomes(genomes, config):
 
             # Create dataframe from prescriptions.
             pres_df = pd.DataFrame(df_dict)
-
             # Make prediction given prescription for all countries
             pred_df = get_predictions(EVAL_START_DATE, date_str, pres_df)
 
+            # ishann
+            #ipdb.set_trace()
+
             # Update past data with new day of prescriptions and predictions
-            pres_df['GeoID'] = pres_df['CountryName'] + '__' + pres_df['RegionName'].astype(str)
-            pred_df['GeoID'] = pred_df['CountryName'] + '__' + pred_df['RegionName'].astype(str)
+            # ishann
+            # Updated GeoID to not include RegionName since all NaNs.
+            pres_df['GeoID'] = pres_df['CountryName'] + '__' #+ pres_df['RegionName'].astype(str)
+            pred_df['GeoID'] = pred_df['CountryName'] + '__' #+ pred_df['RegionName'].astype(str)
             new_pres_df = pres_df[pres_df['Date'] == date_str]
             new_pred_df = pred_df[pred_df['Date'] == date_str]
+
+            #ipdb.set_trace()
+
             for geo in eval_geos:
                 geo_pres = new_pres_df[new_pres_df['GeoID'] == geo]
                 geo_pred = new_pred_df[new_pred_df['GeoID'] == geo]
@@ -150,6 +162,7 @@ def eval_genomes(genomes, config):
         # function can lead directly to the degenerate solution of all ips 0, i.e.,
         # stringency zero. To achieve more interesting behavior, a different fitness
         # function may be required.
+        #ipdb.set_trace()
         new_cases = pred_df[PRED_CASES_COL].mean().mean()
 
         # Computing stringency in this way assumes all ip's are weighted equally.
@@ -194,4 +207,15 @@ winner = p.run(eval_genomes)
 
 # At any time during evolution, we can inspect the latest saved checkpoint
 # neat-checkpoint-* to see how well it is doing.
+"""
+# ishann
+import pickle
+import gzip
+
+checkpoint_file = "neat-checkpoint-0"
+with gzip.open(checkpoint_file) as f:
+    generation, config, population, species_set, rndstate = pickle.load(f)
+"""
+
+
 

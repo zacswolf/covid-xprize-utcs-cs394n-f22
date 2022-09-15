@@ -3,6 +3,8 @@
 import os
 import urllib.request
 
+import ipdb
+
 # Suppress noisy Tensorflow debug logging
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
@@ -28,18 +30,33 @@ ADDITIONAL_CONTEXT_FILE = os.path.join(DATA_PATH, "Additional_Context_Data_Globa
 ADDITIONAL_US_STATES_CONTEXT = os.path.join(DATA_PATH, "US_states_populations.csv")
 ADDITIONAL_UK_CONTEXT = os.path.join(DATA_PATH, "uk_populations.csv")
 
-NPI_COLUMNS = ['C1_School closing',
-               'C2_Workplace closing',
-               'C3_Cancel public events',
-               'C4_Restrictions on gatherings',
-               'C5_Close public transport',
-               'C6_Stay at home requirements',
-               'C7_Restrictions on internal movement',
-               'C8_International travel controls',
-               'H1_Public information campaigns',
-               'H2_Testing policy',
-               'H3_Contact tracing',
-               'H6_Facial Coverings']
+#ishann
+# Depreciated with updates to data API.
+#NPI_COLUMNS = ['C1_School closing',
+#               'C2_Workplace closing',
+#               'C3_Cancel public events',
+#               'C4_Restrictions on gatherings',
+#               'C5_Close public transport',
+#               'C6_Stay at home requirements',
+#               'C7_Restrictions on internal movement',
+#               'C8_International travel controls',
+#               'H1_Public information campaigns',
+#               'H2_Testing policy',
+#               'H3_Contact tracing',
+#               'H6_Facial Coverings']
+NPI_COLUMNS = ['C1M_School closing', 
+           'C2M_Workplace closing',
+           'C3M_Cancel public events',
+           'C4M_Restrictions on gatherings',
+           'C5M_Close public transport', 
+           'C6M_Stay at home requirements',
+           'C7M_Restrictions on internal movement',
+           'C8EV_International travel controls',
+           'H1_Public information campaigns',
+           'H2_Testing policy',
+           'H3_Contact tracing',
+           'H6M_Facial Coverings']
+
 
 CONTEXT_COLUMNS = ['CountryName',
                    'RegionName',
@@ -232,7 +249,10 @@ class XPrizePredictor(object):
                                 encoding="ISO-8859-1",
                                 dtype={"RegionName": str,
                                        "RegionCode": str},
-                                error_bad_lines=False)
+                                # Depreciated.
+                                # ishann
+                                #error_bad_lines=False)
+                                on_bad_lines="skip")
         # Handle regions.
         # Replace CountryName by CountryName / RegionName
         # np.where usage: if A then B else C
@@ -276,14 +296,32 @@ class XPrizePredictor(object):
         additional_us_states_df['CountryName'] = US_PREFIX + additional_us_states_df['CountryName']
 
         # Append the new data to additional_df
-        additional_context_df = additional_context_df.append(additional_us_states_df)
+        # additional_context_df = additional_context_df.append(additional_us_states_df)
+        # ishann
+        # df1.append(df2) has been depreciated.
+        # print("Shapes of the the two DFs: {}, {}".format(additional_context_df.shape, additional_us_states_df.shape))
+        additional_context_df = pd.concat([additional_context_df, additional_us_states_df])
+        # print("Shape of new DF: {}".format(additional_context_df.shape))
 
         # UK population
         additional_uk_df = pd.read_csv(ADDITIONAL_UK_CONTEXT)
         # Append the new data to additional_df
-        additional_context_df = additional_context_df.append(additional_uk_df)
+        # additional_context_df = additional_context_df.append(additional_uk_df)
+        # ishann
+        # df1.append(df2) has been depreciated.
+        additional_context_df = pd.concat([additional_context_df, additional_uk_df])
 
         return additional_context_df
+
+        # ~/xprize_predictor.py:297: FutureWarning: The frame.append method is deprecated and will be
+        # removed from pandas in a future version. Use pandas.concat instead.
+        # additional_context_df = additional_context_df.append(additional_us_states_df)
+        # ~/xprize_predictor.py:302: FutureWarning: The frame.append method is deprecated and will be
+        # removed from pandas in a future version. Use pandas.concat instead.
+        # additional_context_df = additional_context_df.append(additional_uk_df)
+
+
+
 
     def _create_country_samples(self, df: pd.DataFrame, countries: list) -> dict:
         """

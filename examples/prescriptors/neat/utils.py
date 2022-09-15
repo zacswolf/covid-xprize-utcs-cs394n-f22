@@ -7,6 +7,8 @@ import pandas as pd
 from validation.scenario_generator import generate_scenario
 from validation.scenario_generator import get_raw_data
 
+import ipdb
+
 DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master/data/OxCGRT_latest.csv"
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join(ROOT_DIR, 'data')
@@ -21,38 +23,72 @@ CASES_COL = ['NewCases']
 
 PRED_CASES_COL = ['PredictedDailyNewCases']
 
-IP_COLS = ['C1_School closing',
-            'C2_Workplace closing',
-            'C3_Cancel public events',
-            'C4_Restrictions on gatherings',
-            'C5_Close public transport',
-            'C6_Stay at home requirements',
-            'C7_Restrictions on internal movement',
-            'C8_International travel controls',
-            'H1_Public information campaigns',
-            'H2_Testing policy',
-            'H3_Contact tracing',
-            'H6_Facial Coverings']
+# ishann
+# Depreciated IP_COLS from 2020 API.
+#IP_COLS = ['C1_School closing',
+#            'C2_Workplace closing',
+#            'C3_Cancel public events',
+#            'C4_Restrictions on gatherings',
+#            'C5_Close public transport',
+#            'C6_Stay at home requirements',
+#            'C7_Restrictions on internal movement',
+#            'C8_International travel controls',
+#            'H1_Public information campaigns',
+#            'H2_Testing policy',
+#            'H3_Contact tracing',
+#            'H6_Facial Coverings']
+IP_COLS = ['C1M_School closing',
+           'C2M_Workplace closing',
+           'C3M_Cancel public events',
+           'C4M_Restrictions on gatherings',
+           'C5M_Close public transport',
+           'C6M_Stay at home requirements',
+           'C7M_Restrictions on internal movement',
+           'C8EV_International travel controls',
+           'H1_Public information campaigns',
+           'H2_Testing policy',
+           'H3_Contact tracing',
+           'H6M_Facial Coverings']
 
-IP_MAX_VALUES = {
-    'C1_School closing': 3,
-    'C2_Workplace closing': 3,
-    'C3_Cancel public events': 2,
-    'C4_Restrictions on gatherings': 4,
-    'C5_Close public transport': 2,
-    'C6_Stay at home requirements': 3,
-    'C7_Restrictions on internal movement': 2,
-    'C8_International travel controls': 4,
-    'H1_Public information campaigns': 2,
-    'H2_Testing policy': 3,
-    'H3_Contact tracing': 2,
-    'H6_Facial Coverings': 4
-}
+# ishann
+# Depreciated IP_MAX_VALUES from 2020 API.
+#IP_MAX_VALUES = {
+#    'C1_School closing': 3,
+#    'C2_Workplace closing': 3,
+#    'C3_Cancel public events': 2,
+#    'C4_Restrictions on gatherings': 4,
+#    'C5_Close public transport': 2,
+#    'C6_Stay at home requirements': 3,
+#    'C7_Restrictions on internal movement': 2,
+#    'C8_International travel controls': 4,
+#    'H1_Public information campaigns': 2,
+#    'H2_Testing policy': 3,
+#    'H3_Contact tracing': 2,
+#    'H6_Facial Coverings': 4}
+IP_MAX_VALUES = {'C1M_School closing': 3,
+           'C2M_Workplace closing': 3,
+           'C3M_Cancel public events': 2,
+           'C4M_Restrictions on gatherings': 4,
+           'C5M_Close public transport': 2,
+           'C6M_Stay at home requirements': 3,
+           'C7M_Restrictions on internal movement': 2,
+           'C8EV_International travel controls': 4,
+           'H1_Public information campaigns': 2,
+           'H2_Testing policy': 3,
+           'H3_Contact tracing': 2,
+           'H6M_Facial Coverings': 4}
 
 
 # Function that performs basic loading and preprocessing of historical df
 def prepare_historical_df():
 
+    # ishann
+    # ROOT_DIR = "~/covid-xprize-utcs-cs394n-f22/examples/prescriptors/neat"
+    # DATA_PATH = ROOT + "/data"
+    # HIST_DATA_FILE_PATH = DATA_PATH + "/OxCGRT_latest.csv"
+
+    # ishann
+    #ipdb.set_trace()
     # Download data if it we haven't done that yet.
     if not os.path.exists(HIST_DATA_FILE_PATH):
         if not os.path.exists(DATA_PATH):
@@ -63,10 +99,14 @@ def prepare_historical_df():
     df = pd.read_csv(HIST_DATA_FILE_PATH,
                   parse_dates=['Date'],
                   encoding="ISO-8859-1",
-                  error_bad_lines=False)
+                  # error_bad_lines has been depreciated.
+                  #error_bad_lines=False)
+                  on_bad_lines="skip")
 
     # Add GeoID column for easier manipulation
-    df['GeoID'] = df['CountryName'] + '__' + df['RegionName'].astype(str)
+    # RegionNames are all NaNs in new data.
+    # df[GeoID] will now be df["CountryName"] + "__"
+    df['GeoID'] = df['CountryName'] + '__' # + df['RegionName'].astype(str)
 
     # Add new cases column
     df['NewCases'] = df.groupby('GeoID').ConfirmedCases.diff().fillna(0)
@@ -86,6 +126,7 @@ def prepare_historical_df():
 # predictor when prescribing.
 def get_predictions(start_date_str, end_date_str, pres_df, countries=None):
 
+
     # Concatenate prescriptions with historical data
     raw_df = get_raw_data(HIST_DATA_FILE_PATH)
     hist_df = generate_scenario(start_date_str, end_date_str, raw_df,
@@ -104,6 +145,9 @@ def get_predictions(start_date_str, end_date_str, pres_df, countries=None):
     wd = os.getcwd()
     os.chdir("../../..")
 
+    # ishann
+    # python examples/predictors/lstm/predict.py --start_date "2020-08-01" --end_date "2020-08-01" --interventions_plan '/Users/ishannigam/Desktop/F22/cs394n/hws/hw2/covid-xprize-utcs-cs394n-f22/examples/prescriptors/neat/tmp_prescription.csv' --output_file "tmp_predictions_for_prescriptions/preds.csv"
+
     # Run script to generate predictions
     output_str = subprocess.check_output(
         [
@@ -115,6 +159,9 @@ def get_predictions(start_date_str, end_date_str, pres_df, countries=None):
         ],
         stderr=subprocess.STDOUT
     )
+
+    # ishann
+    #ipdb.set_trace()
 
     # Print output from running script
     print(output_str.decode("utf-8"))

@@ -2,6 +2,8 @@
 import os
 import urllib.request
 
+import ipdb
+
 import numpy as np
 import pandas as pd
 
@@ -10,18 +12,33 @@ DATA_URL = "https://raw.githubusercontent.com/OxCGRT/covid-policy-tracker/master
 ID_COLS = ['CountryName',
            'RegionName',
            'Date']
-NPI_COLUMNS = ['C1_School closing',
-               'C2_Workplace closing',
-               'C3_Cancel public events',
-               'C4_Restrictions on gatherings',
-               'C5_Close public transport',
-               'C6_Stay at home requirements',
-               'C7_Restrictions on internal movement',
-               'C8_International travel controls',
-               'H1_Public information campaigns',
-               'H2_Testing policy',
-               'H3_Contact tracing',
-               'H6_Facial Coverings']
+# Depreciated since API update.
+#NPI_COLUMNS = ['C1_School closing',
+#               'C2_Workplace closing',
+#               'C3_Cancel public events',
+#               'C4_Restrictions on gatherings',
+#               'C5_Close public transport',
+#               'C6_Stay at home requirements',
+#               'C7_Restrictions on internal movement',
+#               'C8_International travel controls',
+#               'H1_Public information campaigns',
+#               'H2_Testing policy',
+#               'H3_Contact tracing',
+#               'H6_Facial Coverings']
+# ishann
+NPI_COLUMNS = ['C1M_School closing', 
+           'C2M_Workplace closing',
+           'C3M_Cancel public events',
+           'C4M_Restrictions on gatherings',
+           'C5M_Close public transport', 
+           'C6M_Stay at home requirements',
+           'C7M_Restrictions on internal movement',
+           'C8EV_International travel controls',
+           'H1_Public information campaigns',
+           'H2_Testing policy',
+           'H3_Contact tracing',
+           'H6M_Facial Coverings']
+
 # From https://github.com/OxCGRT/covid-policy-tracker/blob/master/documentation/codebook.md
 MIN_NPIS = [0] * len(NPI_COLUMNS)
 MAX_NPIS = [3, 3, 2, 4, 2, 3, 2, 4, 2, 3, 2, 4]  # Sum is 34
@@ -40,14 +57,25 @@ def get_raw_data(cache_file, latest=True):
 
     """
     # Download and cache the raw data file if it doesn't exist
-    if not os.path.exists(cache_file) or latest:
-        urllib.request.urlretrieve(DATA_URL, cache_file)
+
+    # ishann
+    # Don't get latest data. Use cache_file, which does exist.
+    #if not os.path.exists(cache_file) or latest:
+    #    urllib.request.urlretrieve(DATA_URL, cache_file)
+
+    #ipdb.set_trace()
+    if not os.path.exists(cache_file):
+        print("\nData file does not exist!!\n")
+        return 
+
     latest_df = pd.read_csv(cache_file,
                             parse_dates=['Date'],
                             encoding="ISO-8859-1",
                             dtype={"RegionName": str,
                                    "RegionCode": str},
-                            error_bad_lines=False)
+                            # ishann
+                            #error_bad_lines=False)
+                            on_bad_lines="skip")
     latest_df["RegionName"] = latest_df["RegionName"].fillna("")
     # Fill any missing NPIs by assuming they are the same as previous day, or 0 if none is available
     latest_df.update(latest_df.groupby(['CountryName', 'RegionName'])[NPI_COLUMNS].ffill().fillna(0))

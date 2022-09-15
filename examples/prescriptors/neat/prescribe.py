@@ -9,6 +9,8 @@ from copy import deepcopy
 
 import neat
 
+import ipdb
+
 from keras.models import load_model
 
 from utils import CASES_COL
@@ -35,6 +37,9 @@ def prescribe(start_date_str: str,
               path_to_prior_ips_file: str,
               output_file_path) -> None:
 
+    # ishann
+    #ipdb.set_trace()
+
     start_date = pd.to_datetime(start_date_str, format='%Y-%m-%d')
     end_date = pd.to_datetime(end_date_str, format='%Y-%m-%d')
 
@@ -56,6 +61,9 @@ def prescribe(start_date_str: str,
         geo_df = df[df['GeoID'] == geo]
         past_cases[geo] = np.maximum(0, np.array(geo_df[CASES_COL]))
         past_ips[geo] = np.array(geo_df[IP_COLS])
+
+    # ishann
+    #ipdb.set_trace()
 
     # Gather values for scaling network output
     ip_max_values_arr = np.array([IP_MAX_VALUES[ip] for ip in IP_COLS])
@@ -145,6 +153,10 @@ def prescribe(start_date_str: str,
         # Add prescription df to list of all prescriptions for this submission
         pres_df['PrescriptionIndex'] = prescription_idx
         prescription_dfs.append(pres_df)
+
+
+    # ishann
+    #ipdb.set_trace()
 
     # Combine dfs for all prescriptions into a single df for the submission
     prescription_df = pd.concat(prescription_dfs)
